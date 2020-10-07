@@ -1,20 +1,24 @@
 const express = require('express');
-const mysql = require('mysql');
-
 const app = express();
+const bodyParser = require('body-parser');
+const { connect } = require('./config/db');
 
-const db = mysql.createConnection({
-  host: 'bge6ne8wbc1bbqr1az2f-mysql.services.clever-cloud.com',
-  user: 'uhrp9yqy7ytgbfho',
-  password: 'v4FDb4hE8aVqjK0XTWvK',
-  database: 'bge6ne8wbc1bbqr1az2f',
-});
+connect();
 
-db.connect((err) => {
-  if (err) throw err;
-  console.log('DB Connected');
-});
+// app.use('/', (req, res) => {
+//   res.send('hello');
+// });
 
-app.listen('3000', () => {
-  console.log('Server started...');
-});
+//const jsonParser = bodyParser.json();
+
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// parse application/json
+app.use(bodyParser.json());
+
+app.use('/', require('./routes/users'));
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => console.log(`Server started at port ${PORT}`));
