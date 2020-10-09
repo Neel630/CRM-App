@@ -81,11 +81,11 @@ router.post(
   }
 );
 
-//@route        POST /gettable
+//@route        GET /gettable
 //@desc         Getting User specific table
 //@access       Private
 
-router.post(
+router.get(
   '/gettable',
   [
     check('name', 'Enter User Name').not().isEmpty(),
@@ -98,8 +98,6 @@ router.post(
     }
 
     const { email } = req.body;
-
-    // let sql = `WITH r AS ( SELECT * FROM information_schema.tables WHERE table_schema = '${database}' AND table_name = '${email}' LIMIT 1 ) SELECT * FROM r UNION ALL SELECT * FROM \`Users\` AND NOT EXISTS ( SELECT * FROM r )`;
 
     let sql = `SELECT * FROM \`${email}\``;
 
@@ -115,10 +113,93 @@ router.post(
         }
         msg['columns'] = columns;
         msg['tables'] = resultTable;
-        res.send(msg);
+        res.json({ msg });
       });
     });
   }
 );
+
+//@route        PUT /addcolumn
+//@desc         Add user specific column to table
+//@access       Private
+
+router.put(
+  '/addcolumn',
+  [
+    check('name', 'Enter User Name').not().isEmpty(),
+    check('email', 'Please enter valid email').isEmail(),
+    check('columnName', 'Please enter column name to add').not().isEmpty(),
+    check(
+      'isText',
+      'Please specify column type(Text or Numeric) boolean'
+    ).isBoolean(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email, columnName, isText } = req.body;
+
+    let dataType = isText ? 'VARCHAR(255)' : 'BIGINT(255)';
+
+    let sql = `ALTER TABLE \`${email}\` ADD \`${columnName}\` ${dataType} NOT NULL`;
+
+    let query = db.query(sql, (err, results) => {
+      res.json({ msg: results });
+    });
+  }
+);
+
+
+//@route        PUT /updatecolumn
+//@desc         Update column of User specific table
+//@access       Private
+
+router.put(
+  '/updatecolumn',
+  [
+    check('id', 'Enter id').not().isEmpty(),
+    check('email', 'Please enter valid email').isEmail(),
+    check('columns', 'Please enter column/columns name and values to add').not().isEmpty(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email, id, columns } = req.body;
+
+    let updateColumns = "";
+
+    for(let keys = Object.keys(columns), i = 0, end = keys.length; i < end; i++) {
+      let key = keys[i];
+      if(i==end-1){
+        updateColumns += `\`${key}\` = '${columns[key]}' `;
+      } else{
+        updateColumns += `\`${key}\` = '${columns[key]}', `;
+      }
+    };
+
+    let sql = `UPDATE \`${email}\` SET ${updateColumns} WHERE \`${email}\`.\`id\` = ${id} `;
+    let query = db.query(sql, (err, results) => {
+      let msg = "";
+      if(!results){
+        msg = "Error encounter! Check email and columns";
+      }
+      else if(results["affectedRows"]>0){
+        msg = "Tabel Updated Successfully";
+      }else{
+        msg = "No row to update";
+      }
+
+      res.json({ msg });
+    });
+  }
+);
+
+
 
 module.exports = router;
