@@ -15,6 +15,10 @@ app.use(bodyParser.json());
 
 app.use(cookieParser());
 
+app.use('/me',(req,res)=>{
+  res.send('Hello Welcome to CRM App!');
+});
+
 app.use('/', require('./routes/users'));
 
 const PORT = process.env.PORT || 5000;

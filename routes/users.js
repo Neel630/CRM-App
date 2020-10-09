@@ -2,13 +2,12 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../config/db');
 const { check, validationResult } = require('express-validator');
-const session = require('express-session');
 const config = require('config');
 const database = config.get('database');
 
 //@route        POST /user
-//@desc         Getting User Specific Table
-//@access       Private
+//@desc         User Authentication
+//@access       Public
 
 router.post(
   '/user',
@@ -36,7 +35,8 @@ router.post(
           ? results
           : 'Invalid password';
 
-      res.json({ msg });
+      let status = results.length===0 ? 404 : results[0].password===password ? 200 : 401;
+      res.status(status).json({ msg });
     });
   }
 );
@@ -86,22 +86,16 @@ router.post(
 //@access       Private
 
 router.get(
-  '/gettable',
-  [
-    check('name', 'Enter User Name').not().isEmpty(),
-    check('email', 'Please enter valid email').isEmail(),
-  ],
+  '/gettable/:tablename',
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email } = req.body;
+    let sql = `SELECT * FROM \`${req.params.tablename}\``;
 
-    let sql = `SELECT * FROM \`${email}\``;
-
-    let columnSql = `SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'${email}' ORDER BY ORDINAL_POSITION`;
+    let columnSql = `SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'${req.params.tablename}' ORDER BY ORDINAL_POSITION`;
 
     let msg = {};
 
