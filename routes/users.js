@@ -7,7 +7,6 @@ const database = config.get('database');
 
 //@route        POST /user
 //@desc         User Authentication
-//@access       Public
 
 router.post(
   '/user',
@@ -43,7 +42,6 @@ router.post(
 
 //@route        POST /createtable
 //@desc         Creating User Specific Table if not exist
-//@access       Private
 
 router.post(
   '/createtable',
@@ -65,7 +63,7 @@ router.post(
 
     let query = db.query(sql, (err, results) => {
       if (results.length === 0) {
-        let sqlCreateTable = `CREATE TABLE \`bge6ne8wbc1bbqr1az2f\`.\`${email}\` ( \`id\` INT NOT NULL AUTO_INCREMENT , \`firstname\` VARCHAR(255) NOT NULL , \`lastname\` VARCHAR(255) NOT NULL , \`phone\` INT(10) NOT NULL , PRIMARY KEY (\`id\`)) ENGINE = InnoDB;`;
+        let sqlCreateTable = `CREATE TABLE \`bge6ne8wbc1bbqr1az2f\`.\`${email}\` ( \`id\` INT NOT NULL AUTO_INCREMENT , \`firstname\` VARCHAR(255) NOT NULL , \`lastname\` VARCHAR(255) NOT NULL , \`phone\` BIGINT(15) NOT NULL , PRIMARY KEY (\`id\`)) ENGINE = InnoDB;`;
         db.query(sqlCreateTable, (errTables, resultsTables) => {
           console.log(resultsTables);
         });
@@ -83,7 +81,6 @@ router.post(
 
 //@route        GET /gettable
 //@desc         Getting User specific table
-//@access       Private
 
 router.get(
   '/gettable/:tablename',
@@ -113,9 +110,58 @@ router.get(
   }
 );
 
+
+
+//@route        POST /insertrow
+//@desc         Insert new row in table
+
+router.post(
+  '/insertrow',
+  [
+    check('email', 'Please enter valid email').isEmail(),
+    check('columnName', 'Please enter column name to add').not().isEmpty(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email, columnName } = req.body;
+
+    let columnKeys = "(";
+    let values = "(";
+
+    for(let keys = Object.keys(columnName), i = 0, end = keys.length; i < end; i++) {
+      let key = keys[i];
+      if(i==end-1){
+        columnKeys += `\`${key}\``
+        values += `'${columnName[key]}'`;
+      } else{
+        columnKeys += `\`${key}\` ,`
+        values += `'${columnName[key]}' ,`;
+      }
+    };
+
+    columnKeys += ")";
+    values += ")";
+
+    let sql = `INSERT INTO \`${email}\` ${columnKeys} VALUES ${values}`
+
+    console.log(sql);
+    let query = db.query(sql, (err, results) => {
+      let msg = results;
+      if(!results){
+        msg = "Error encounter!";
+      }
+      res.json({ msg: results });
+    });
+  }
+);
+
+
 //@route        PUT /addcolumn
 //@desc         Add user specific column to table
-//@access       Private
 
 router.put(
   '/addcolumn',
@@ -141,6 +187,10 @@ router.put(
     let sql = `ALTER TABLE \`${email}\` ADD \`${columnName}\` ${dataType} NOT NULL`;
 
     let query = db.query(sql, (err, results) => {
+      let msg = results;
+      if(!results){
+        msg = "Error encounter!";
+      }
       res.json({ msg: results });
     });
   }
@@ -149,7 +199,6 @@ router.put(
 
 //@route        PUT /updatecolumn
 //@desc         Update column of User specific table
-//@access       Private
 
 router.put(
   '/updatecolumn',
