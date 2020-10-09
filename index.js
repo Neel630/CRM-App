@@ -1,7 +1,6 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
 const { connect } = require('./config/db');
 
 //connect with database
@@ -12,8 +11,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // parse application/json
 app.use(bodyParser.json());
-
-app.use(cookieParser());
 
 app.use('/me',(req,res)=>{
   res.send('Hello Welcome to CRM App!');

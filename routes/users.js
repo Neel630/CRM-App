@@ -64,9 +64,7 @@ router.post(
     let query = db.query(sql, (err, results) => {
       if (results.length === 0) {
         let sqlCreateTable = `CREATE TABLE \`bge6ne8wbc1bbqr1az2f\`.\`${email}\` ( \`id\` INT NOT NULL AUTO_INCREMENT , \`firstname\` VARCHAR(255) NOT NULL , \`lastname\` VARCHAR(255) NOT NULL , \`phone\` BIGINT(15) NOT NULL , PRIMARY KEY (\`id\`)) ENGINE = InnoDB;`;
-        db.query(sqlCreateTable, (errTables, resultsTables) => {
-          console.log(resultsTables);
-        });
+        db.query(sqlCreateTable, (errTables, resultsTables) => {});
       }
 
       let msg =
